@@ -131,7 +131,7 @@ class TeleopConverterTester(Node):
         self.get_logger().info(f'Protobuf 解析: {"可用" if self.can_parse_protobuf else "不可用（将使用主程序日志验证）"}')
         self.get_logger().info('=' * 70)
         self.get_logger().info('💡 提示: 请同时运行 teleop2can_transformer 节点以查看详细的转换日志')
-        self.get_logger().info('   命令: ros2 launch Teleop2CanTransformer teleop_converter.launch.py')
+        self.get_logger().info('   命令: ros2 launch teleoptocantransformer teleop_converter.launch.py')
         self.get_logger().info('=' * 70)
         self._print_ranges()
     

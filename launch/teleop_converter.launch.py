@@ -4,7 +4,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
     return LaunchDescription([
         Node(
-            package='Teleop2CanTransformer',
+            package='teleoptocantransformer',
             executable='teleop2can_transformer',
             name='teleop2can_transformer',
             output='screen',

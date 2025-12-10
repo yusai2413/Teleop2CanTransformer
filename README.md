@@ -1,4 +1,4 @@
-# Teleop2CanTransformer
+# teleoptocantransformer
 
 这个包将远程端的控制指令（JSON 格式）转换为 cannode 可以接收的控制指令（protobuf 格式）。
 
@@ -131,14 +131,14 @@
 
 ```bash
 cd /home/cyber007/cannode_ws
-colcon build --packages-select Teleop2CanTransformer
+colcon build --packages-select teleoptocantransformer
 source install/setup.bash
 ```
 
 ### 运行
 
 ```bash
-ros2 launch Teleop2CanTransformer teleop_converter.launch.py
+ros2 launch teleoptocantransformer teleop_converter.launch.py
 ```
 
 ### 测试
@@ -158,7 +158,7 @@ ros2 topic pub /controls/teleop std_msgs/String "data: '{\"leftTrack\": 0.3, \"r
 提供了一个完整的测试程序 (`scripts/test_converter.py`)，包含所有测试功能：
 
 ```bash
-python3 src/Teleop2CanTransformer/scripts/test_converter.py
+python3 src/teleoptocantransformer/scripts/test_converter.py
 ```
 
 ### 功能特性
@@ -226,5 +226,5 @@ python3 src/Teleop2CanTransformer/scripts/test_converter.py
 6. 部分字段（leftTrack, rightTrack, swing, stick, light_code, hydraulic_lock, horn）会被接收但不会映射到输出，这些字段仅用于日志记录
 7. 测试前确保 teleop2can_transformer 节点正在运行：
    ```bash
-   ros2 launch Teleop2CanTransformer teleop_converter.launch.py
+   ros2 launch teleoptocantransformer teleop_converter.launch.py
    ```
