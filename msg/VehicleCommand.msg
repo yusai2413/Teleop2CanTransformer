@@ -9,7 +9,7 @@ float64 steering_target
 # 油门控制 (throttle: [0, 200])
 float64 throttle
 
-# 刹车控制 (brake: [0, 1000])
+# 刹车控制 (brake: [350, 3900])
 float64 brake
 
 # 档位 (0=NEUTRAL, 1=DRIVE, 2=REVERSE)

@@ -221,12 +221,14 @@ private:
                 cmd.set_throttle(last_throttle_);
             }
             
-            // 处理刹车控制 (brake: -1..1 -> brake: 1000..0，反向映射)
+            // 处理刹车控制 (brake: -1..1 -> brake: 3900..350，反向映射)
             if (data.find("brake") != data.end()) {
                 double brake_input = clamp(SimpleJsonParser::get_double(data["brake"]), -1.0, 1.0);
                 brake_input = apply_deadzone(brake_input, brake_deadzone_);
-                // 映射：-1 -> 1000, 1 -> 0
-                double brake_value = (1.0 - brake_input) / 2.0 * 1000.0;
+                // 映射：-1 -> 3900, 1 -> 350
+                const double brake_min = 350.0;
+                const double brake_max = 3900.0;
+                double brake_value = (1.0 - brake_input) / 2.0 * (brake_max - brake_min) + brake_min;
                 cmd.set_brake(brake_value);
                 last_brake_ = brake_value;
             } else {
@@ -355,11 +357,11 @@ private:
                 RCLCPP_WARN(this->get_logger(), "     ⚠ 警告: throttle 超出范围 [0, 200]");
             }
             
-            // 刹车 (brake: [0, 1000])
+            // 刹车 (brake: [350, 3900])
             double brake = cmd.brake();
             RCLCPP_INFO(this->get_logger(), "   刹车 (brake): %.2f", brake);
-            if (brake < 0.0 || brake > 1000.0) {
-                RCLCPP_WARN(this->get_logger(), "     ⚠ 警告: brake 超出范围 [0, 1000]");
+            if (brake < 350.0 || brake > 3900.0) {
+                RCLCPP_WARN(this->get_logger(), "     ⚠ 警告: brake 超出范围 [350, 3900]");
             }
             
             // 档位字符串
