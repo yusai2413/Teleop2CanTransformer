@@ -6,13 +6,16 @@
 #include <chrono>
 #include <cmath>
 #include <string>
+#include <sstream>
 #include <map>
+#include <functional>
 #include "simple_json_parser.hpp"
 
 // Protobuf 头文件
 #include "control_msgs/control_cmd.pb.h"
 #include "common_msgs/chassis_msgs/chassis.pb.h"
 #include "common_msgs/basic_msgs/header.pb.h"
+#include <sa_msgs/msg/chassis_status.hpp>
 
 using namespace std::chrono_literals;
 
@@ -27,6 +30,10 @@ public:
         this->declare_parameter<double>("brake_deadzone", 0.05);
         this->declare_parameter<double>("boom_deadzone", 0.05);
         this->declare_parameter<double>("bucket_deadzone", 0.05);
+        // 各发布开关（yaml 可配置）
+        this->declare_parameter<bool>("publish_vehicle_command", true);         // 是否发布 /vehicle_command
+        this->declare_parameter<bool>("publish_vehicle_command_debug", true);   // 是否发布 /vehicle_command_debug
+        this->declare_parameter<bool>("publish_chassis_feedback", true);        // 是否发布 cannode/chassis_feedback
         
         // 角度映射范围（度）
         // 大臂范围：-800~800
@@ -50,6 +57,9 @@ public:
         shovel_angle_min_ = this->get_parameter("shovel_angle_min").as_double();
         shovel_angle_max_ = this->get_parameter("shovel_angle_max").as_double();
         max_speed_ = this->get_parameter("max_speed").as_double();
+        publish_vehicle_command_ = this->get_parameter("publish_vehicle_command").as_bool();
+        publish_vehicle_command_debug_ = this->get_parameter("publish_vehicle_command_debug").as_bool();
+        publish_chassis_feedback_ = this->get_parameter("publish_chassis_feedback").as_bool();
         
         // 创建订阅者（订阅远程端控制指令）
         // 使用 BEST_EFFORT QoS 以匹配发布者（参考 keyboard_piston_joint_publisher_2_updated.py）
@@ -81,6 +91,23 @@ public:
             "/vehicle_command_debug",
             vehicle_cmd_qos
         );
+
+        // 订阅 cannode 输出的底盘状态并转成 JSON 后发布
+        rclcpp::QoS chassis_qos(10);
+        chassis_qos.reliability(rclcpp::ReliabilityPolicy::Reliable);
+        chassis_qos.durability(rclcpp::DurabilityPolicy::Volatile);
+        chassis_qos.history(rclcpp::HistoryPolicy::KeepLast);
+
+        chassis_status_sub_ = this->create_subscription<sa_msgs::msg::ChassisStatus>(
+            "/chassis_status",
+            chassis_qos,
+            std::bind(&Teleop2CanTransformer::chassis_status_callback, this, std::placeholders::_1)
+        );
+
+        chassis_feedback_pub_ = this->create_publisher<std_msgs::msg::String>(
+            "cannode/chassis_feedback",
+            chassis_qos
+        );
         
         RCLCPP_INFO(this->get_logger(), "QoS 配置: /controls/teleop (BEST_EFFORT), /vehicle_command (RELIABLE)");
         RCLCPP_INFO(this->get_logger(), "订阅话题: /controls/teleop");
@@ -109,6 +136,10 @@ public:
         RCLCPP_INFO(this->get_logger(), "Teleop2CanTransformer 节点已启动");
         RCLCPP_INFO(this->get_logger(), "死区设置: steering=%.3f, throttle=%.3f, brake=%.3f, boom=%.3f, bucket=%.3f",
                     steering_deadzone_, throttle_deadzone_, brake_deadzone_, boom_deadzone_, bucket_deadzone_);
+        RCLCPP_INFO(this->get_logger(), "发布开关: publish_vehicle_command=%s, publish_vehicle_command_debug=%s, publish_chassis_feedback=%s",
+                    publish_vehicle_command_ ? "true" : "false",
+                    publish_vehicle_command_debug_ ? "true" : "false",
+                    publish_chassis_feedback_ ? "true" : "false");
     }
 
 private:
@@ -130,6 +161,113 @@ private:
     double clamp(double value, double min_val, double max_val)
     {
         return std::max(min_val, std::min(max_val, value));
+    }
+
+    // 将 ChassisStatus 转成 JSON 字符串
+    std::string chassis_status_to_json(const sa_msgs::msg::ChassisStatus & msg)
+    {
+        auto bool_to_str = [](bool v) { return v ? "true" : "false"; };
+        std::ostringstream oss;
+        oss << "{";
+        oss << "\"header\":{";
+        oss << "\"stamp\":{\"sec\":" << msg.header.stamp.sec << ",\"nanosec\":" << msg.header.stamp.nanosec << "},";
+        oss << "\"frame_id\":\"" << msg.header.frame_id << "\"";
+        oss << "},";
+
+        // 0x18FF0001
+        oss << "\"high_voltage_status\":" << bool_to_str(msg.high_voltage_status) << ",";
+        oss << "\"parking_brake\":" << bool_to_str(msg.parking_brake) << ",";
+        oss << "\"horn_status\":" << bool_to_str(msg.horn_status) << ",";
+        oss << "\"left_turn_signal\":" << bool_to_str(msg.left_turn_signal) << ",";
+        oss << "\"right_turn_signal\":" << bool_to_str(msg.right_turn_signal) << ",";
+        oss << "\"walk_motor_mode\":" << static_cast<int>(msg.walk_motor_mode) << ",";
+        oss << "\"wet_brake_alarm\":" << bool_to_str(msg.wet_brake_alarm) << ",";
+        oss << "\"emergency_stop\":" << bool_to_str(msg.emergency_stop) << ",";
+        oss << "\"gear_signal\":" << static_cast<int>(msg.gear_signal) << ",";
+        oss << "\"rotation_alarm\":" << static_cast<int>(msg.rotation_alarm) << ",";
+        oss << "\"heartbeat_status\":" << bool_to_str(msg.heartbeat_status) << ",";
+        oss << "\"brake_control\":" << msg.brake_control << ",";
+        oss << "\"front_rear_angle\":" << msg.front_rear_angle << ",";
+        oss << "\"battery_level\":" << static_cast<int>(msg.battery_level) << ",";
+        oss << "\"charging_status\":" << bool_to_str(msg.charging_status) << ",";
+        oss << "\"hydraulic_lock\":" << bool_to_str(msg.hydraulic_lock) << ",";
+        oss << "\"fault_level\":" << static_cast<int>(msg.fault_level) << ",";
+        oss << "\"turtle_rabbit_gear\":" << bool_to_str(msg.turtle_rabbit_gear) << ",";
+        oss << "\"work_light\":" << bool_to_str(msg.work_light) << ",";
+        oss << "\"vehicle_mode\":" << static_cast<int>(msg.vehicle_mode) << ",";
+
+        // 0x18FF0002
+        oss << "\"boom_lift_current\":" << msg.boom_lift_current << ",";
+        oss << "\"boom_lower_current\":" << msg.boom_lower_current << ",";
+        oss << "\"bucket_close_current\":" << msg.bucket_close_current << ",";
+        oss << "\"bucket_open_current\":" << msg.bucket_open_current << ",";
+
+        // 0x18FF0003
+        oss << "\"boom_big_pressure\":" << msg.boom_big_pressure << ",";
+        oss << "\"boom_small_pressure\":" << msg.boom_small_pressure << ",";
+        oss << "\"bucket_big_pressure\":" << msg.bucket_big_pressure << ",";
+        oss << "\"bucket_small_pressure\":" << msg.bucket_small_pressure << ",";
+
+        // 0x18FF0004
+        oss << "\"hydraulic_motor_speed\":" << msg.hydraulic_motor_speed << ",";
+        oss << "\"hydraulic_motor_torque\":" << msg.hydraulic_motor_torque << ",";
+        oss << "\"hydraulic_motor_current\":" << msg.hydraulic_motor_current << ",";
+        oss << "\"hydraulic_motor_enable\":" << bool_to_str(msg.hydraulic_motor_enable) << ",";
+
+        // 0x18FF0005
+        oss << "\"walk_motor_current\":" << msg.walk_motor_current << ",";
+        oss << "\"walk_motor_torque\":" << msg.walk_motor_torque << ",";
+        // 车辆速度 = 行走电机反馈速度 * 0.0122
+        oss << "\"walk_motor_speed\":" << msg.walk_motor_speed << ",";
+        oss << "\"vehicle_speed\":" << msg.walk_motor_speed * 0.0122 << ",";
+        oss << "\"walk_motor_enable\":" << bool_to_str(msg.walk_motor_enable) << ",";
+
+        // 0x18FF0006
+        oss << "\"throttle_opening\":" << static_cast<int>(msg.throttle_opening) << ",";
+        oss << "\"brake_opening\":" << static_cast<int>(msg.brake_opening) << ",";
+        oss << "\"heartbeat_signal\":" << bool_to_str(msg.heartbeat_signal) << ",";
+        oss << "\"can_loss_1\":" << bool_to_str(msg.can_loss_1) << ",";
+        oss << "\"can_loss_2\":" << bool_to_str(msg.can_loss_2) << ",";
+        oss << "\"can_loss_3\":" << bool_to_str(msg.can_loss_3) << ",";
+        oss << "\"can_loss_4\":" << bool_to_str(msg.can_loss_4) << ",";
+        oss << "\"walk_motor_fault\":" << bool_to_str(msg.walk_motor_fault) << ",";
+        oss << "\"hydraulic_motor_fault\":" << bool_to_str(msg.hydraulic_motor_fault) << ",";
+        oss << "\"boom_lift_valve_fault\":" << bool_to_str(msg.boom_lift_valve_fault) << ",";
+        oss << "\"boom_lower_valve_fault\":" << bool_to_str(msg.boom_lower_valve_fault) << ",";
+        oss << "\"bucket_close_valve_fault\":" << bool_to_str(msg.bucket_close_valve_fault) << ",";
+        oss << "\"bucket_open_valve_fault\":" << bool_to_str(msg.bucket_open_valve_fault) << ",";
+        oss << "\"foot_brake_valve_fault\":" << bool_to_str(msg.foot_brake_valve_fault) << ",";
+        oss << "\"turn_valve_fault\":" << bool_to_str(msg.turn_valve_fault) << ",";
+        oss << "\"low_beam\":" << bool_to_str(msg.low_beam) << ",";
+        oss << "\"high_beam\":" << bool_to_str(msg.high_beam) << ",";
+        oss << "\"hydraulic_motor_voltage\":" << static_cast<int>(msg.hydraulic_motor_voltage) << ",";
+        oss << "\"turn_valve_current\":" << msg.turn_valve_current << ",";
+        oss << "\"hydraulic_motor_mode\":" << static_cast<int>(msg.hydraulic_motor_mode) << ",";
+        oss << "\"vehicle_mode_2\":" << static_cast<int>(msg.vehicle_mode_2) << ",";
+
+        // 0x18FF0009
+        oss << "\"rear_motor_current\":" << msg.rear_motor_current << ",";
+        oss << "\"rear_motor_voltage\":" << static_cast<int>(msg.rear_motor_voltage) << ",";
+        oss << "\"front_motor_current\":" << msg.front_motor_current << ",";
+        oss << "\"front_motor_voltage\":" << static_cast<int>(msg.front_motor_voltage) << ",";
+        oss << "\"hydraulic_motor_current_2\":" << msg.hydraulic_motor_current_2 << ",";
+
+        // 0x18FF000A
+        oss << "\"boom_angle\":" << msg.boom_angle << ",";
+        oss << "\"bucket_angle\":" << msg.bucket_angle;
+
+        oss << "}";
+        return oss.str();
+    }
+
+    // 底盘状态订阅回调
+    void chassis_status_callback(const sa_msgs::msg::ChassisStatus::SharedPtr msg)
+    {
+        if (publish_chassis_feedback_) {
+            std_msgs::msg::String json_msg;
+            json_msg.data = chassis_status_to_json(*msg);
+            chassis_feedback_pub_->publish(json_msg);
+        }
     }
     
     // 将档位字符串转换为 GearPosition 枚举
@@ -452,12 +590,15 @@ private:
             std::string serialized_data;
             cmd.SerializeToString(&serialized_data);
             
-            // 创建 ROS2 消息并发布（序列化版本）
+            // 创建 ROS2 消息（序列化版本），可配置是否发布
             auto ros_msg = sa_msgs::msg::ProtoAdapter();
             ros_msg.pb.assign(serialized_data.begin(), serialized_data.end());
-            vehicle_cmd_pub_->publish(ros_msg);
+            if (publish_vehicle_command_) {  // 根据参数决定是否发布
+                vehicle_cmd_pub_->publish(ros_msg);
+            }
             
             // 创建并发布非序列化消息（用于调试和查看）
+        if (publish_vehicle_command_debug_) {
             auto debug_msg = teleoptocantransformer::msg::VehicleCommand();
             debug_msg.header.stamp = this->now();
             debug_msg.header.frame_id = "base_link";
@@ -474,6 +615,7 @@ private:
             debug_msg.parking_brake = cmd.has_parking_brake() ? cmd.parking_brake() : false;
             debug_msg.engine_on_off = cmd.has_engine_on_off() ? cmd.engine_on_off() : false;
             vehicle_cmd_debug_pub_->publish(debug_msg);
+        }
             
             RCLCPP_INFO(this->get_logger(), "✅ 已发布到 /vehicle_command (protobuf 大小: %zu 字节)", serialized_data.size());
             RCLCPP_INFO(this->get_logger(), "✅ 已发布到 /vehicle_command_debug (非序列化消息)");
@@ -488,6 +630,8 @@ private:
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr teleop_sub_;
     rclcpp::Publisher<sa_msgs::msg::ProtoAdapter>::SharedPtr vehicle_cmd_pub_;
     rclcpp::Publisher<teleoptocantransformer::msg::VehicleCommand>::SharedPtr vehicle_cmd_debug_pub_;
+    rclcpp::Subscription<sa_msgs::msg::ChassisStatus>::SharedPtr chassis_status_sub_;
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr chassis_feedback_pub_;
     
     // 死区参数
     double steering_deadzone_;
@@ -504,6 +648,11 @@ private:
     
     // 速度限制
     double max_speed_;
+
+    // 是否发布/vehicle_command
+    bool publish_vehicle_command_;
+    bool publish_vehicle_command_debug_;
+    bool publish_chassis_feedback_;
     
     // 上次的值（用于保持状态）
     control::canbus::Chassis::GearPosition last_gear_;
