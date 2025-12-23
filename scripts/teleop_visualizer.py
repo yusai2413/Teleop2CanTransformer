@@ -179,10 +179,15 @@ class TeleopVisualizer(Node):
             print('=' * 60)
             
             with self.data_lock:
-                # 更新数据
+                # 更新数据（支持两种命名方式：驼峰和下划线）
                 for key in self.latest_data:
                     if key in data:
                         self.latest_data[key] = data[key]
+                    # 同时支持下划线命名方式（left_track -> leftTrack, right_track -> rightTrack）
+                    elif key == 'leftTrack' and 'left_track' in data:
+                        self.latest_data[key] = data['left_track']
+                    elif key == 'rightTrack' and 'right_track' in data:
+                        self.latest_data[key] = data['right_track']
                         
         except json.JSONDecodeError as e:
             self.get_logger().warn(f'JSON 解析错误: {e}')
@@ -413,6 +418,33 @@ class TeleopVisualizer(Node):
             fill=axis_color, width=2, tags='axis'
         )
     
+    def get_track_value(self, data, track_name):
+        """获取履带值，支持两种命名方式：驼峰（leftTrack/rightTrack）和下划线（left_track/right_track）"""
+        # 优先使用驼峰命名
+        camel_name = track_name
+        snake_name = track_name.replace('Track', '_track')
+        if camel_name in data:
+            return data[camel_name]
+        elif snake_name in data:
+            return data[snake_name]
+        else:
+            return 0.0
+    
+    def apply_track_deadzone(self, value, deadzone=0.3):
+        """应用履带死区：-deadzone 到 deadzone 范围内不动作，剩余部分映射到 [-1, 1]"""
+        if abs(value) <= deadzone:
+            return 0.0
+        
+        # 将有效范围映射到 [-1, 1]
+        if value > deadzone:
+            # 正方向：将 [deadzone, 1] 映射到 [0, 1]
+            mapped = (value - deadzone) / (1.0 - deadzone)
+        else:
+            # 负方向：将 [-1, -deadzone] 映射到 [-1, 0]
+            mapped = (value + deadzone) / (1.0 - deadzone)
+        
+        return mapped
+    
     def update_excavator_animation(self, data):
         """更新挖掘机动画"""
         # 清除之前的绘制（保留网格和坐标轴）
@@ -427,9 +459,14 @@ class TeleopVisualizer(Node):
             if item not in items_to_keep:
                 self.canvas.delete(item)
         
-        # 获取控制数据
-        leftTrack = data.get('leftTrack', 0.0)  # -1 到 1，后退到前进
-        rightTrack = data.get('rightTrack', 0.0)  # -1 到 1，后退到前进
+        # 获取控制数据（支持两种命名方式）
+        leftTrack_raw = self.get_track_value(data, 'leftTrack')  # -1 到 1，后退到前进
+        rightTrack_raw = self.get_track_value(data, 'rightTrack')  # -1 到 1，后退到前进
+        
+        # 应用死区：-0.3 到 0.3 不动作，剩余部分映射到 [-1, 1]
+        leftTrack = self.apply_track_deadzone(leftTrack_raw, deadzone=0.3)
+        rightTrack = self.apply_track_deadzone(rightTrack_raw, deadzone=0.3)
+        
         swing = data.get('swing', 0.0)  # -1 到 1，左转到右转
         boom = data.get('boom', 0.0)  # -1 到 1，下降到提升
         stick = data.get('stick', 0.0)  # -1 到 1，收回到伸出
@@ -927,14 +964,17 @@ class TeleopVisualizer(Node):
     
     def update_control_panel(self, data):
         """更新控制面板"""
-        # 更新所有控制项
+        # 更新所有控制项（支持两种命名方式）
         for key in ['leftTrack', 'rightTrack', 'swing', 'boom', 'stick', 'bucket']:
-            value = data.get(key, 0.0)
+            if key in ['leftTrack', 'rightTrack']:
+                value = self.get_track_value(data, key)
+            else:
+                value = data.get(key, 0.0)
             self.update_control_item(key, value)
         
-        # 更新状态信息
-        leftTrack = data.get('leftTrack', 0.0)
-        rightTrack = data.get('rightTrack', 0.0)
+        # 更新状态信息（支持两种命名方式）
+        leftTrack = self.get_track_value(data, 'leftTrack')
+        rightTrack = self.get_track_value(data, 'rightTrack')
         self.status_labels['leftTrack'].config(text=f'{leftTrack:.2f}')
         self.status_labels['rightTrack'].config(text=f'{rightTrack:.2f}')
         
