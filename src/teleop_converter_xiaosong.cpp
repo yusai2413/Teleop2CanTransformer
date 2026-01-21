@@ -201,6 +201,13 @@ private:
     std::string chassis_status_to_json(const sa_msgs::msg::ChassisStatus & msg)
     {
         auto bool_to_str = [](bool v) { return v ? "true" : "false"; };
+        // 安全输出浮点数，NaN/Inf 转换为 0
+        auto safe_float = [](float v) -> float {
+            if (std::isnan(v) || std::isinf(v)) {
+                return 0.0f;
+            }
+            return v;
+        };
         std::ostringstream oss;
         oss << "{";
         oss << "\"header\":{";
@@ -221,7 +228,7 @@ private:
         oss << "\"rotation_alarm\":" << static_cast<int>(msg.rotation_alarm) << ",";
         oss << "\"heartbeat_status\":" << bool_to_str(msg.heartbeat_status) << ",";
         oss << "\"brake_control\":" << msg.brake_control << ",";
-        oss << "\"front_rear_angle\":" << msg.front_rear_angle << ",";
+        oss << "\"front_rear_angle\":" << safe_float(msg.front_rear_angle) << ",";
         oss << "\"battery_level\":" << static_cast<int>(msg.battery_level) << ",";
         oss << "\"charging_status\":" << bool_to_str(msg.charging_status) << ",";
         oss << "\"hydraulic_lock\":" << bool_to_str(msg.hydraulic_lock) << ",";
@@ -247,8 +254,10 @@ private:
         oss << "\"hydraulic_motor_enable\":" << bool_to_str(msg.hydraulic_motor_enable) << ",";
         oss << "\"walk_motor_current\":" << msg.walk_motor_current << ",";
         oss << "\"walk_motor_torque\":" << msg.walk_motor_torque << ",";
-        oss << "\"walk_motor_speed\":" << msg.walk_motor_speed << ",";
-        oss << "\"vehicle_speed\":" << msg.walk_motor_speed * 3.6 << ",";
+        // 安全处理 walk_motor_speed，避免 NaN 值
+        float safe_walk_speed = safe_float(msg.walk_motor_speed);
+        oss << "\"walk_motor_speed\":" << safe_walk_speed << ",";
+        oss << "\"vehicle_speed\":" << safe_float(safe_walk_speed * 3.6f) << ",";
         oss << "\"walk_motor_enable\":" << bool_to_str(msg.walk_motor_enable) << ",";
 
         // 角度信息（优先使用挖掘机 IMU 计算得到的相对角）
@@ -264,9 +273,10 @@ private:
                 bucket_angle = excavator_bucket_angle_deg_;
             }
         }
-        oss << "\"boom_angle\":" << boom_angle << ",";
-        oss << "\"stick_angle\":" << stick_angle << ",";
-        oss << "\"bucket_angle\":" << bucket_angle;
+        // 安全处理角度值，避免 NaN
+        oss << "\"boom_angle\":" << safe_float(static_cast<float>(boom_angle)) << ",";
+        oss << "\"stick_angle\":" << safe_float(static_cast<float>(stick_angle)) << ",";
+        oss << "\"bucket_angle\":" << safe_float(static_cast<float>(bucket_angle));
 
         oss << "}";
         return oss.str();
