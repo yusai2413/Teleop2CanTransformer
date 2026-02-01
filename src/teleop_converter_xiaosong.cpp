@@ -318,8 +318,8 @@ private:
             header->set_frame_id("base_link");
             
             // 处理大臂控制 (boom: -1..1 -> arm_up_current / arm_down_current)
+            // 修正：0 到 1：抬升方向，映射到 arm_up_current 0~700
             // -1 到 0：下降方向，映射到 arm_down_current 700~0
-            // 0 到 1：抬升方向，映射到 arm_up_current 0~700
             if (data.find("boom") != data.end()) {
                 double boom_input = clamp(SimpleJsonParser::get_double(data["boom"]), -1.0, 1.0);
                 
@@ -352,26 +352,26 @@ private:
             
             // 处理斗杆控制 (stick: -1..1 -> stick_retract_current / stick_extend_current)
             // 注意：根据你反馈的实际动作方向，这里约定：
-            //   stick > 0 表示斗杆收回；stick < 0 表示斗杆伸出
-            //   收回：0~1 映射到 stick_retract_current 0~700
-            //   伸出：-1~0 映射到 stick_extend_current 700~0
+            //   stick > 0 表示斗杆伸出；stick < 0 表示斗杆收回
+            //   伸出：0~1 映射到 stick_extend_current 0~700
+            //   收回：-1~0 映射到 stick_retract_current 700~0
             if (data.find("stick") != data.end()) {
                 double stick_input = clamp(SimpleJsonParser::get_double(data["stick"]), -1.0, 1.0);
                 
                 if (stick_input > 0) {
-                    // 收回：0~1 映射到 0~700（retract）
-                    double current = input_to_current(stick_input, stick_deadzone_);
-                    cmd.set_stick_retract_current(current);
-                    cmd.set_stick_extend_current(0.0);
-                    last_stick_retract_current_ = current;
-                    last_stick_extend_current_ = 0.0;
-                } else if (stick_input < 0) {
-                    // 伸出：-1~0 映射到 700~0（extend）
+                    // 伸出：0~1 映射到 0~700（extend）
                     double current = input_to_current(stick_input, stick_deadzone_);
                     cmd.set_stick_retract_current(0.0);
                     cmd.set_stick_extend_current(current);
                     last_stick_retract_current_ = 0.0;
                     last_stick_extend_current_ = current;
+                } else if (stick_input < 0) {
+                    // 收回：-1~0 映射到 700~0（retract）
+                    double current = input_to_current(stick_input, stick_deadzone_);
+                    cmd.set_stick_retract_current(current);
+                    cmd.set_stick_extend_current(0.0);
+                    last_stick_retract_current_ = current;
+                    last_stick_extend_current_ = 0.0;
                 } else {
                     // 无输入
                     cmd.set_stick_retract_current(0.0);
@@ -386,25 +386,25 @@ private:
             }
             
             // 处理铲斗控制 (bucket: -1..1 -> bucket_close_current / bucket_dump_current)
-            // -1 到 0：收斗方向，映射到 bucket_close_current 700~0
-            // 0 到 1：翻斗方向，映射到 bucket_dump_current 0~700
+            // 0 到 1：收斗方向，映射到 bucket_close_current 0~700
+            // -1 到 0：翻斗方向，映射到 bucket_dump_current 700~0
             if (data.find("bucket") != data.end()) {
                 double bucket_input = clamp(SimpleJsonParser::get_double(data["bucket"]), -1.0, 1.0);
                 
                 if (bucket_input > 0) {
-                    // 翻斗：0~1 映射到 0~700
-                    double current = input_to_current(bucket_input, bucket_deadzone_);
-                    cmd.set_bucket_close_current(0.0);
-                    cmd.set_bucket_dump_current(current);
-                    last_bucket_close_current_ = 0.0;
-                    last_bucket_dump_current_ = current;
-                } else if (bucket_input < 0) {
-                    // 收斗：-1~0 映射到 700~0
+                    // 收斗：0~1 映射到 0~700
                     double current = input_to_current(bucket_input, bucket_deadzone_);
                     cmd.set_bucket_close_current(current);
                     cmd.set_bucket_dump_current(0.0);
                     last_bucket_close_current_ = current;
                     last_bucket_dump_current_ = 0.0;
+                } else if (bucket_input < 0) {
+                    // 翻斗：-1~0 映射到 700~0
+                    double current = input_to_current(bucket_input, bucket_deadzone_);
+                    cmd.set_bucket_close_current(0.0);
+                    cmd.set_bucket_dump_current(current);
+                    last_bucket_close_current_ = 0.0;
+                    last_bucket_dump_current_ = current;
                 } else {
                     // 无输入
                     cmd.set_bucket_close_current(0.0);
@@ -452,8 +452,8 @@ private:
             }
             
             // 处理左履带控制 (leftTrack/left_track: -1..1 -> left_track_forward_current / left_track_backward_current)
-            // -1 到 0：前进方向，映射到 left_track_forward_current 700~0
-            // 0 到 1：后退方向，映射到 left_track_backward_current 0~700
+            // 0 到 1：前进方向，映射到 left_track_forward_current 0~700
+            // -1 到 0：后退方向，映射到 left_track_backward_current 700~0
             {
                 bool has_left_track = false;
                 double left_track_input = 0.0;
@@ -469,19 +469,19 @@ private:
 
                 if (has_left_track) {
                     if (left_track_input > 0) {
-                        // 后退：0~1 映射到 0~700
-                        double current = input_to_current(left_track_input, track_deadzone_);
-                        cmd.set_left_track_forward_current(0.0);
-                        cmd.set_left_track_backward_current(current);
-                        last_left_track_forward_current_ = 0.0;
-                        last_left_track_backward_current_ = current;
-                    } else if (left_track_input < 0) {
-                        // 前进：-1~0 映射到 700~0
+                        // 前进：0~1 映射到 0~700
                         double current = input_to_current(left_track_input, track_deadzone_);
                         cmd.set_left_track_forward_current(current);
                         cmd.set_left_track_backward_current(0.0);
                         last_left_track_forward_current_ = current;
                         last_left_track_backward_current_ = 0.0;
+                    } else if (left_track_input < 0) {
+                        // 后退：-1~0 映射到 700~0
+                        double current = input_to_current(left_track_input, track_deadzone_);
+                        cmd.set_left_track_forward_current(0.0);
+                        cmd.set_left_track_backward_current(current);
+                        last_left_track_forward_current_ = 0.0;
+                        last_left_track_backward_current_ = current;
                     } else {
                         // 无输入
                         cmd.set_left_track_forward_current(0.0);
@@ -497,8 +497,8 @@ private:
             }
             
             // 处理右履带控制 (rightTrack/right_track: -1..1 -> right_track_forward_current / right_track_backward_current)
-            // -1 到 0：前进方向，映射到 right_track_forward_current 700~0
-            // 0 到 1：后退方向，映射到 right_track_backward_current 0~700
+            // 0 到 1：前进方向，映射到 right_track_forward_current 0~700
+            // -1 到 0：后退方向，映射到 right_track_backward_current 700~0
             {
                 bool has_right_track = false;
                 double right_track_input = 0.0;
@@ -514,19 +514,19 @@ private:
 
                 if (has_right_track) {
                     if (right_track_input > 0) {
-                        // 后退：0~1 映射到 0~700
-                        double current = input_to_current(right_track_input, track_deadzone_);
-                        cmd.set_right_track_forward_current(0.0);
-                        cmd.set_right_track_backward_current(current);
-                        last_right_track_forward_current_ = 0.0;
-                        last_right_track_backward_current_ = current;
-                    } else if (right_track_input < 0) {
-                        // 前进：-1~0 映射到 700~0
+                        // 前进：0~1 映射到 0~700
                         double current = input_to_current(right_track_input, track_deadzone_);
                         cmd.set_right_track_forward_current(current);
                         cmd.set_right_track_backward_current(0.0);
                         last_right_track_forward_current_ = current;
                         last_right_track_backward_current_ = 0.0;
+                    } else if (right_track_input < 0) {
+                        // 后退：-1~0 映射到 700~0
+                        double current = input_to_current(right_track_input, track_deadzone_);
+                        cmd.set_right_track_forward_current(0.0);
+                        cmd.set_right_track_backward_current(current);
+                        last_right_track_forward_current_ = 0.0;
+                        last_right_track_backward_current_ = current;
                     } else {
                         // 无输入
                         cmd.set_right_track_forward_current(0.0);
