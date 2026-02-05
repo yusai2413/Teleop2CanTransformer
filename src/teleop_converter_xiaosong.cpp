@@ -3,6 +3,7 @@
 #include <sa_msgs/msg/proto_adapter.hpp>
 #include "teleoptocantransformer/msg/vehicle_command.hpp"
 #include <geometry_msgs/msg/vector3.hpp>  // 挖掘机相对关节角 /excavator_joint_angles
+#include "cannode/msg/rotary_encoder_angle.hpp"  // Danfoss 编码器角度
 #include <rclcpp/qos.hpp>
 #include <chrono>
 #include <cmath>
@@ -109,6 +110,21 @@ public:
             rclcpp::QoS(10).reliable(),
             std::bind(
                 &Teleop2CanTransformerXiaosong::excavator_angles_callback,
+                this,
+                std::placeholders::_1));
+
+        // 订阅 Danfoss 编码器角度（来自 danfoss_rotary_encoder_node）
+        // 话题：/rotary_encoder_angle，消息：cannode/msg/RotaryEncoderAngle
+        // angle1 用于回转角度（swing_angle）
+        // 注意：使用 BestEffort QoS 以匹配发布者的 QoS 设置
+        rclcpp::QoS rotary_encoder_qos(10);
+        rotary_encoder_qos.reliability(rclcpp::ReliabilityPolicy::BestEffort);
+        rotary_encoder_qos.durability(rclcpp::DurabilityPolicy::Volatile);
+        rotary_encoder_sub_ = this->create_subscription<cannode::msg::RotaryEncoderAngle>(
+            "/rotary_encoder_angle",
+            rotary_encoder_qos,
+            std::bind(
+                &Teleop2CanTransformerXiaosong::rotary_encoder_callback,
                 this,
                 std::placeholders::_1));
         
@@ -276,7 +292,17 @@ private:
         // 安全处理角度值，避免 NaN
         oss << "\"boom_angle\":" << safe_float(static_cast<float>(boom_angle)) << ",";
         oss << "\"stick_angle\":" << safe_float(static_cast<float>(stick_angle)) << ",";
-        oss << "\"bucket_angle\":" << safe_float(static_cast<float>(bucket_angle));
+        oss << "\"bucket_angle\":" << safe_float(static_cast<float>(bucket_angle)) << ",";
+        
+        // 回转角度（来自 Danfoss 编码器）
+        double swing_angle = 0.0;
+        {
+            std::lock_guard<std::mutex> lk(rotary_encoder_mutex_);
+            if (rotary_encoder_valid_) {
+                swing_angle = rotary_encoder_angle1_deg_;
+            }
+        }
+        oss << "\"swing_angle\":" << safe_float(static_cast<float>(swing_angle));
 
         oss << "}";
         return oss.str();
@@ -656,6 +682,22 @@ private:
         excavator_stick_angle_deg_ = msg->y;
         excavator_bucket_angle_deg_ = msg->z;
         excavator_angles_valid_ = true;
+    }
+
+    // Danfoss 编码器角度反馈（来自 /rotary_encoder_angle）
+    rclcpp::Subscription<cannode::msg::RotaryEncoderAngle>::SharedPtr rotary_encoder_sub_;
+    mutable std::mutex rotary_encoder_mutex_;
+    bool rotary_encoder_valid_{false};
+    double rotary_encoder_angle1_deg_{0.0};  // 编码器 angle1，用于回转角度
+
+    void rotary_encoder_callback(const cannode::msg::RotaryEncoderAngle::SharedPtr msg)
+    {
+        std::lock_guard<std::mutex> lk(rotary_encoder_mutex_);
+        rotary_encoder_angle1_deg_ = static_cast<double>(msg->angle1);
+        rotary_encoder_valid_ = true;
+        if (verbose_log_) {
+            RCLCPP_INFO(this->get_logger(), "收到编码器数据: angle1=%.2f°", rotary_encoder_angle1_deg_);
+        }
     }
     
     // 上次的值（用于保持状态）

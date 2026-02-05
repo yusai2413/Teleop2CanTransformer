@@ -10,6 +10,8 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sa_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(cannode REQUIRED)
 find_package(Protobuf REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
@@ -98,6 +100,8 @@ ament_target_dependencies(teleop2can_transformer_xiaosong
   rclcpp
   std_msgs
   sa_msgs
+  geometry_msgs
+  cannode
 )
 
 # 链接消息库
