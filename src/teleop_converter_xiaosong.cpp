@@ -101,6 +101,13 @@ public:
             "cannode/chassis_feedback",
             chassis_qos
         );
+        
+        // 订阅 VCU 反馈数据（0x18FF1002）
+        vcu_feedback_sub_ = this->create_subscription<std_msgs::msg::String>(
+            "/cannode/vcu_feedback",
+            chassis_qos,
+            std::bind(&Teleop2CanTransformerXiaosong::vcu_feedback_callback, this, std::placeholders::_1)
+        );
 
         // 订阅挖掘机相对关节角（来自 multi_tilt_imu_node）
         // 话题：/excavator_joint_angles，消息：geometry_msgs/Vector3
@@ -157,6 +164,8 @@ public:
         last_left_track_backward_current_ = 0.0;
         last_right_track_forward_current_ = 0.0;
         last_right_track_backward_current_ = 0.0;
+        last_request_remote_control_ = false;
+        last_estop_ = false;
         
         RCLCPP_INFO(this->get_logger(), "Teleop2CanTransformerXiaosong 节点已启动（适配小松协议）");
         RCLCPP_INFO(this->get_logger(), "死区设置: arm=%.3f, stick=%.3f, bucket=%.3f, swing=%.3f, track=%.3f",
@@ -303,11 +312,40 @@ private:
             }
         }
         oss << "\"swing_angle\":" << safe_float(static_cast<float>(swing_angle));
+        
+        // VCU 反馈数据 (0x18FF1002) - 从订阅的话题获取
+        {
+            std::lock_guard<std::mutex> lk(vcu_feedback_mutex_);
+            if (!vcu_feedback_json_.empty()) {
+                // 移除 JSON 字符串的外层大括号，然后添加到主 JSON 中
+                std::string vcu_data = vcu_feedback_json_;
+                if (vcu_data.front() == '{' && vcu_data.back() == '}') {
+                    vcu_data = vcu_data.substr(1, vcu_data.length() - 2);
+                }
+                oss << ",\"vcu_feedback\":{" << vcu_data << "}";
+            } else {
+                // 如果没有收到 VCU 反馈数据，使用默认值
+                oss << ",\"vcu_feedback\":{";
+                oss << "\"digital_inputs\":{";
+                oss << "\"in_43_di\":false,\"in_44_di\":false,\"in_45_di\":false,\"in_46_di\":false,";
+                oss << "\"in_47_di\":false,\"in_48_di\":false,\"in_49_di\":false,\"in_50_di\":false";
+                oss << "},";
+                oss << "\"is_remote\":false,\"is_emergency\":false";
+                oss << "}";
+            }
+        }
 
         oss << "}";
         return oss.str();
     }
 
+    // VCU 反馈数据订阅回调
+    void vcu_feedback_callback(const std_msgs::msg::String::SharedPtr msg)
+    {
+        std::lock_guard<std::mutex> lk(vcu_feedback_mutex_);
+        vcu_feedback_json_ = msg->data;
+    }
+    
     // 底盘状态订阅回调
     void chassis_status_callback(const sa_msgs::msg::ChassisStatus::SharedPtr msg)
     {
@@ -571,12 +609,20 @@ private:
             if (data.find("request_remote_control") != data.end()) {
                 bool request_remote = SimpleJsonParser::get_bool(data["request_remote_control"]);
                 cmd.set_request_remote_control(request_remote);
+                last_request_remote_control_ = request_remote;
+            } else {
+                // 保持上次值
+                cmd.set_request_remote_control(last_request_remote_control_);
             }
             
             // 处理紧急停止
             if (data.find("emergency_stop") != data.end()) {
                 bool estop = SimpleJsonParser::get_bool(data["emergency_stop"]);
                 cmd.set_estop(estop);
+                last_estop_ = estop;
+            } else {
+                // 保持上次值
+                cmd.set_estop(last_estop_);
             }
             
             // 处理驻车制动
@@ -654,7 +700,12 @@ private:
     rclcpp::Publisher<sa_msgs::msg::ProtoAdapter>::SharedPtr vehicle_cmd_pub_;
     rclcpp::Publisher<teleoptocantransformer::msg::VehicleCommand>::SharedPtr vehicle_cmd_debug_pub_;
     rclcpp::Subscription<sa_msgs::msg::ChassisStatus>::SharedPtr chassis_status_sub_;
+    rclcpp::Subscription<std_msgs::msg::String>::SharedPtr vcu_feedback_sub_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr chassis_feedback_pub_;
+    
+    // VCU 反馈数据缓存
+    std::mutex vcu_feedback_mutex_;
+    std::string vcu_feedback_json_;  // 缓存的 VCU 反馈 JSON 数据
     
     // 死区参数
     double arm_deadzone_;
@@ -719,6 +770,8 @@ private:
     double last_left_track_backward_current_;
     double last_right_track_forward_current_;
     double last_right_track_backward_current_;
+    bool last_request_remote_control_;
+    bool last_estop_;
 };
 
 int main(int argc, char** argv)
