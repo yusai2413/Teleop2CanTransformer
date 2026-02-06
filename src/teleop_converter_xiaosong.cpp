@@ -135,10 +135,10 @@ public:
                 this,
                 std::placeholders::_1));
         
-        RCLCPP_INFO(this->get_logger(), "QoS 配置: /controls/teleop (BEST_EFFORT), /vehicle_command (RELIABLE)");
-        RCLCPP_INFO(this->get_logger(), "订阅话题: /controls/teleop");
-        RCLCPP_INFO(this->get_logger(), "发布话题: /vehicle_command (序列化)");
-        RCLCPP_INFO(this->get_logger(), "发布话题: /vehicle_command_debug (非序列化，可用 ros2 topic echo 查看)");
+        // RCLCPP_INFO(this->get_logger(), "QoS 配置: /controls/teleop (BEST_EFFORT), /vehicle_command (RELIABLE)");
+        // RCLCPP_INFO(this->get_logger(), "订阅话题: /controls/teleop");
+        // RCLCPP_INFO(this->get_logger(), "发布话题: /vehicle_command (序列化)");
+        // RCLCPP_INFO(this->get_logger(), "发布话题: /vehicle_command_debug (非序列化，可用 ros2 topic echo 查看)");
         
         // 使用定时器定期检查连接状态
         auto connection_check_timer = this->create_wall_timer(
@@ -146,8 +146,8 @@ public:
             [this]() {
                 size_t pub_count = teleop_sub_->get_publisher_count();
                 size_t sub_count = vehicle_cmd_pub_->get_subscription_count();
-                RCLCPP_INFO(this->get_logger(), "连接状态检查: /controls/teleop 发布者数=%zu, /vehicle_command 订阅者数=%zu", 
-                           pub_count, sub_count);
+                // RCLCPP_INFO(this->get_logger(), "连接状态检查: /controls/teleop 发布者数=%zu, /vehicle_command 订阅者数=%zu", 
+                //            pub_count, sub_count);
             }
         );
         
@@ -167,16 +167,16 @@ public:
         last_request_remote_control_ = false;
         last_estop_ = false;
         
-        RCLCPP_INFO(this->get_logger(), "Teleop2CanTransformerXiaosong 节点已启动（适配小松协议）");
-        RCLCPP_INFO(this->get_logger(), "死区设置: arm=%.3f, stick=%.3f, bucket=%.3f, swing=%.3f, track=%.3f",
-                    arm_deadzone_, stick_deadzone_, bucket_deadzone_, swing_deadzone_, track_deadzone_);
-        RCLCPP_INFO(this->get_logger(), "电流范围: 最大电流=%.1f mA",
-                    max_current_);
-        RCLCPP_INFO(this->get_logger(), "发布开关: publish_vehicle_command=%s, publish_vehicle_command_debug=%s, publish_chassis_feedback=%s",
-                    publish_vehicle_command_ ? "true" : "false",
-                    publish_vehicle_command_debug_ ? "true" : "false",
-                    publish_chassis_feedback_ ? "true" : "false");
-        RCLCPP_INFO(this->get_logger(), "详细日志: verbose_log=%s (默认关闭以降低CPU)", verbose_log_ ? "true" : "false");
+        // RCLCPP_INFO(this->get_logger(), "Teleop2CanTransformerXiaosong 节点已启动（适配小松协议）");
+        // RCLCPP_INFO(this->get_logger(), "死区设置: arm=%.3f, stick=%.3f, bucket=%.3f, swing=%.3f, track=%.3f",
+        //             arm_deadzone_, stick_deadzone_, bucket_deadzone_, swing_deadzone_, track_deadzone_);
+        // RCLCPP_INFO(this->get_logger(), "电流范围: 最大电流=%.1f mA",
+        //             max_current_);
+        // RCLCPP_INFO(this->get_logger(), "发布开关: publish_vehicle_command=%s, publish_vehicle_command_debug=%s, publish_chassis_feedback=%s",
+        //             publish_vehicle_command_ ? "true" : "false",
+        //             publish_vehicle_command_debug_ ? "true" : "false",
+        //             publish_chassis_feedback_ ? "true" : "false");
+        // RCLCPP_INFO(this->get_logger(), "详细日志: verbose_log=%s (默认关闭以降低CPU)", verbose_log_ ? "true" : "false");
     }
 
 private:
@@ -359,14 +359,14 @@ private:
     void teleop_callback(const std_msgs::msg::String::SharedPtr msg)
     {
         if (verbose_log_) {
-            RCLCPP_INFO(this->get_logger(), "🔔 回调函数被调用！");
+            // RCLCPP_INFO(this->get_logger(), "🔔 回调函数被调用！");
         }
         try {
             // 打印接收到的原始输入
             if (verbose_log_) {
-                RCLCPP_INFO(this->get_logger(), "============================================================");
-                RCLCPP_INFO(this->get_logger(), "📥 收到控制指令: %s", msg->data.c_str());
-                RCLCPP_INFO(this->get_logger(), "📥 消息长度: %zu 字节", msg->data.length());
+                // RCLCPP_INFO(this->get_logger(), "============================================================");
+                // RCLCPP_INFO(this->get_logger(), "📥 收到控制指令: %s", msg->data.c_str());
+                // RCLCPP_INFO(this->get_logger(), "📥 消息长度: %zu 字节", msg->data.length());
             }
             
             // 解析 JSON
@@ -638,27 +638,27 @@ private:
             
             // 打印转换后的输出信息（仅在 verbose 模式下打印）
             if (verbose_log_) {
-                RCLCPP_INFO(this->get_logger(), "📤 转换后的控制命令 (xiaosong 协议):");
-                RCLCPP_INFO(this->get_logger(), "   大臂: 抬升=%.1f mA, 下降=%.1f mA", 
-                           cmd.arm_up_current(), cmd.arm_down_current());
-                RCLCPP_INFO(this->get_logger(), "   斗杆: 收回=%.1f mA, 伸出=%.1f mA", 
-                           cmd.stick_retract_current(), cmd.stick_extend_current());
-                RCLCPP_INFO(this->get_logger(), "   铲斗: 收斗=%.1f mA, 翻斗=%.1f mA", 
-                           cmd.bucket_close_current(), cmd.bucket_dump_current());
-                RCLCPP_INFO(this->get_logger(), "   回转: 左转=%.1f mA, 右转=%.1f mA", 
-                           cmd.rotate_left_current(), cmd.rotate_right_current());
-                RCLCPP_INFO(this->get_logger(), "   左履带: 前进=%.1f mA, 后退=%.1f mA", 
-                           cmd.left_track_forward_current(), cmd.left_track_backward_current());
-                RCLCPP_INFO(this->get_logger(), "   右履带: 前进=%.1f mA, 后退=%.1f mA", 
-                           cmd.right_track_forward_current(), cmd.right_track_backward_current());
+                // RCLCPP_INFO(this->get_logger(), "📤 转换后的控制命令 (xiaosong 协议):");
+                // RCLCPP_INFO(this->get_logger(), "   大臂: 抬升=%.1f mA, 下降=%.1f mA", 
+                //            cmd.arm_up_current(), cmd.arm_down_current());
+                // RCLCPP_INFO(this->get_logger(), "   斗杆: 收回=%.1f mA, 伸出=%.1f mA", 
+                //            cmd.stick_retract_current(), cmd.stick_extend_current());
+                // RCLCPP_INFO(this->get_logger(), "   铲斗: 收斗=%.1f mA, 翻斗=%.1f mA", 
+                //            cmd.bucket_close_current(), cmd.bucket_dump_current());
+                // RCLCPP_INFO(this->get_logger(), "   回转: 左转=%.1f mA, 右转=%.1f mA", 
+                //            cmd.rotate_left_current(), cmd.rotate_right_current());
+                // RCLCPP_INFO(this->get_logger(), "   左履带: 前进=%.1f mA, 后退=%.1f mA", 
+                //            cmd.left_track_forward_current(), cmd.left_track_backward_current());
+                // RCLCPP_INFO(this->get_logger(), "   右履带: 前进=%.1f mA, 后退=%.1f mA", 
+                //            cmd.right_track_forward_current(), cmd.right_track_backward_current());
                 if (cmd.has_switch_bits()) {
-                    RCLCPP_INFO(this->get_logger(), "   开关量位图: 0x%08X", cmd.switch_bits());
+                    // RCLCPP_INFO(this->get_logger(), "   开关量位图: 0x%08X", cmd.switch_bits());
                 }
                 if (cmd.has_estop()) {
-                    RCLCPP_INFO(this->get_logger(), "   紧急停止: %s", cmd.estop() ? "是" : "否");
+                    // RCLCPP_INFO(this->get_logger(), "   紧急停止: %s", cmd.estop() ? "是" : "否");
                 }
                 if (cmd.has_parking_brake()) {
-                    RCLCPP_INFO(this->get_logger(), "   驻车制动: %s", cmd.parking_brake() ? "是" : "否");
+                    // RCLCPP_INFO(this->get_logger(), "   驻车制动: %s", cmd.parking_brake() ? "是" : "否");
                 }
             }
             
@@ -685,13 +685,13 @@ private:
             }
             
             if (verbose_log_) {
-                RCLCPP_INFO(this->get_logger(), "✅ 已发布到 /vehicle_command (protobuf 大小: %zu 字节)", serialized_data.size());
-                RCLCPP_INFO(this->get_logger(), "✅ 已发布到 /vehicle_command_debug (非序列化消息)");
-                RCLCPP_INFO(this->get_logger(), "============================================================");
+                // RCLCPP_INFO(this->get_logger(), "✅ 已发布到 /vehicle_command (protobuf 大小: %zu 字节)", serialized_data.size());
+                // RCLCPP_INFO(this->get_logger(), "✅ 已发布到 /vehicle_command_debug (非序列化消息)");
+                // RCLCPP_INFO(this->get_logger(), "============================================================");
             }
             
         } catch (const std::exception& e) {
-            RCLCPP_ERROR(this->get_logger(), "处理控制命令时出错: %s", e.what());
+            // RCLCPP_ERROR(this->get_logger(), "处理控制命令时出错: %s", e.what());
         }
     }
     
@@ -753,7 +753,7 @@ private:
         rotary_encoder_angle1_deg_ = static_cast<double>(msg->angle1);
         rotary_encoder_valid_ = true;
         if (verbose_log_) {
-            RCLCPP_INFO(this->get_logger(), "收到编码器数据: angle1=%.2f°", rotary_encoder_angle1_deg_);
+            // RCLCPP_INFO(this->get_logger(), "收到编码器数据: angle1=%.2f°", rotary_encoder_angle1_deg_);
         }
     }
     

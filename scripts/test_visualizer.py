@@ -114,7 +114,7 @@ class VisualizerTester(Node):
     
     def demo_forward_backward(self):
         """演示前进后退"""
-        print("\n🚜 演示: 前进后退")
+        # print("\n🚜 演示: 前进后退")
         # 先回到原位置
         self.reset_controls()
         time.sleep(0.5)
@@ -153,7 +153,7 @@ class VisualizerTester(Node):
     
     def demo_swing(self):
         """演示回转"""
-        print("\n🔄 演示: 车身回转")
+        # print("\n🔄 演示: 车身回转")
         # 先回到原位置
         self.reset_controls()
         time.sleep(0.5)
@@ -180,7 +180,7 @@ class VisualizerTester(Node):
     
     def demo_boom(self):
         """演示大臂"""
-        print("\n📏 演示: 大臂升降")
+        # print("\n📏 演示: 大臂升降")
         # 先回到原位置
         self.reset_controls()
         time.sleep(0.5)
@@ -207,7 +207,7 @@ class VisualizerTester(Node):
     
     def demo_stick(self):
         """演示斗杆"""
-        print("\n🔧 演示: 斗杆伸缩")
+        # print("\n🔧 演示: 斗杆伸缩")
         # 先回到原位置
         self.reset_controls()
         time.sleep(0.5)
@@ -234,7 +234,7 @@ class VisualizerTester(Node):
     
     def demo_bucket(self):
         """演示铲斗"""
-        print("\n🪣 演示: 铲斗翻转")
+        # print("\n🪣 演示: 铲斗翻转")
         # 先回到原位置
         self.reset_controls()
         time.sleep(0.5)
@@ -261,13 +261,13 @@ class VisualizerTester(Node):
     
     def demo_combined(self):
         """演示组合动作"""
-        print("\n🎭 演示: 组合动作")
+        # print("\n🎭 演示: 组合动作")
         # 先回到原位置
         self.reset_controls()
         time.sleep(0.5)
         
         # 动作1: 前进 + 回转 + 大臂提升
-        print("  动作1: 前进 + 回转 + 大臂提升")
+        # print("  动作1: 前进 + 回转 + 大臂提升")
         self.controls['leftTrack'] = 0.3
         self.controls['rightTrack'] = 0.3
         self.controls['gear'] = 'D'
@@ -278,7 +278,7 @@ class VisualizerTester(Node):
         time.sleep(2.0)
         
         # 动作2: 大臂下降 + 斗杆伸出 + 铲斗翻转
-        print("  动作2: 大臂下降 + 斗杆伸出 + 铲斗翻转")
+        # print("  动作2: 大臂下降 + 斗杆伸出 + 铲斗翻转")
         self.controls['leftTrack'] = 0.0
         self.controls['rightTrack'] = 0.0
         self.controls['throttle'] = 0.0
@@ -289,7 +289,7 @@ class VisualizerTester(Node):
         time.sleep(2.0)
         
         # 动作3: 回转 + 收回
-        print("  动作3: 回转 + 收回")
+        # print("  动作3: 回转 + 收回")
         self.controls['swing'] = -0.6
         self.controls['boom'] = 0.3
         self.controls['stick'] = -0.5
@@ -303,7 +303,7 @@ class VisualizerTester(Node):
     
     def demo_smooth_animation(self):
         """演示平滑动画（正弦波）"""
-        print("\n🌊 演示: 平滑动画（正弦波）")
+        # print("\n🌊 演示: 平滑动画（正弦波）")
         # 先回到原位置
         self.reset_controls()
         time.sleep(0.5)
@@ -330,7 +330,7 @@ class VisualizerTester(Node):
     
     def demo_turn(self):
         """演示差速转向"""
-        print("\n🔄 演示: 差速转向")
+        # print("\n🔄 演示: 差速转向")
         # 先回到原位置
         self.reset_controls()
         time.sleep(0.5)
@@ -358,14 +358,14 @@ class VisualizerTester(Node):
     
     def demo_turn_backward(self):
         """演示左右转后退"""
-        print("\n🔄⬅️ 演示: 左右转后退")
+        # print("\n🔄⬅️ 演示: 左右转后退")
         # 先回到原位置
         self.reset_controls()
         time.sleep(0.5)
         
         for i in range(3):
             # 左转后退（左履带慢后退，右履带快后退）
-            print("  左转后退")
+            # print("  左转后退")
             self.controls['leftTrack'] = -0.3
             self.controls['rightTrack'] = -0.8
             self.controls['gear'] = 'R'
@@ -378,7 +378,7 @@ class VisualizerTester(Node):
             time.sleep(0.5)
             
             # 右转后退（左履带快后退，右履带慢后退）
-            print("  右转后退")
+            # print("  右转后退")
             self.controls['leftTrack'] = -0.8
             self.controls['rightTrack'] = -0.3
             self.controls['gear'] = 'R'
@@ -396,9 +396,9 @@ class VisualizerTester(Node):
     
     def run_auto_demo(self):
         """运行自动演示"""
-        print("\n" + "="*60)
-        print("🎬 开始自动演示模式")
-        print("="*60)
+        # print("\n" + "="*60)
+        # print("🎬 开始自动演示模式")
+        # print("="*60)
         
         demos = [
             ("前进后退", self.demo_forward_backward),
@@ -413,25 +413,25 @@ class VisualizerTester(Node):
         ]
         
         for name, demo_func in demos:
-            print(f"\n▶️  执行演示: {name}")
+            # print(f"\n▶️  执行演示: {name}")
             demo_func()
             time.sleep(1.0)
         
-        print("\n✅ 自动演示完成")
+        # print("\n✅ 自动演示完成")
         self.reset_controls()
     
     def interactive_mode(self):
         """交互式控制模式"""
-        print("\n" + "="*60)
-        print("🎮 交互式控制模式")
-        print("="*60)
-        print("输入控制值（输入 'help' 查看帮助，输入 'quit' 退出）")
-        print("格式: 字段名=值，例如: boom=0.5, leftTrack=-0.3")
-        print("支持的命令:")
-        print("  reset - 重置所有控制值")
-        print("  demo - 运行自动演示")
-        print("  quit - 退出")
-        print("-"*60)
+        # print("\n" + "="*60)
+        # print("🎮 交互式控制模式")
+        # print("="*60)
+        # print("输入控制值（输入 'help' 查看帮助，输入 'quit' 退出）")
+        # print("格式: 字段名=值，例如: boom=0.5, leftTrack=-0.3")
+        # print("支持的命令:")
+        # print("  reset - 重置所有控制值")
+        # print("  demo - 运行自动演示")
+        # print("  quit - 退出")
+        # print("-"*60)
         
         while self.running:
             try:
@@ -446,13 +446,13 @@ class VisualizerTester(Node):
                     self.run_auto_demo()
                     continue
                 elif cmd.lower() == 'help' or cmd.lower() == 'h':
-                    print("\n可用字段:")
-                    print("  leftTrack, rightTrack: -1.0 到 1.0")
-                    print("  swing, boom, stick, bucket: -1.0 到 1.0")
-                    print("  steering, throttle, brake: -1.0 到 1.0")
-                    print("  gear: N, D, R")
-                    print("  speed_mode: turtle, rabbit")
-                    print("  emergency_stop, parking_brake, power_enable: true, false")
+                    # print("\n可用字段:")
+                    # print("  leftTrack, rightTrack: -1.0 到 1.0")
+                    # print("  swing, boom, stick, bucket: -1.0 到 1.0")
+                    # print("  steering, throttle, brake: -1.0 到 1.0")
+                    # print("  gear: N, D, R")
+                    # print("  speed_mode: turtle, rabbit")
+                    # print("  emergency_stop, parking_brake, power_enable: true, false")
                     continue
                 elif not cmd:
                     self.publish_controls()
@@ -482,10 +482,10 @@ class VisualizerTester(Node):
                                     elif key in ['throttle', 'brake']:
                                         self.controls[key] = max(0.0, min(1.0, self.controls[key]))
                                 except ValueError:
-                                    print(f"❌ 无效的数值: {value}")
+                                    # print(f"❌ 无效的数值: {value}")
                                     continue
                         else:
-                            print(f"❌ 未知字段: {key}")
+                            # print(f"❌ 未知字段: {key}")
                             continue
                 
                 self.publish_controls()
@@ -495,7 +495,7 @@ class VisualizerTester(Node):
             except EOFError:
                 break
         
-        print("\n👋 退出交互式模式")
+        # print("\n👋 退出交互式模式")
         self.reset_controls()
 
 
@@ -503,13 +503,13 @@ def main(args=None):
     rclpy.init(args=args)
     tester = VisualizerTester()
     
-    print("\n" + "="*60)
-    print("🧪 挖掘机控制可视化界面测试工具")
-    print("="*60)
-    print("\n请选择模式:")
-    print("  1. 自动演示模式 (auto)")
-    print("  2. 交互式控制模式 (interactive)")
-    print("\n或者直接运行: python test_visualizer.py auto|interactive")
+    # print("\n" + "="*60)
+    # print("🧪 挖掘机控制可视化界面测试工具")
+    # print("="*60)
+    # print("\n请选择模式:")
+    # print("  1. 自动演示模式 (auto)")
+    # print("  2. 交互式控制模式 (interactive)")
+    # print("\n或者直接运行: python test_visualizer.py auto|interactive")
     
     mode = 'interactive'
     if len(sys.argv) > 1:
@@ -522,7 +522,7 @@ def main(args=None):
             elif user_input in ['2', 'interactive', 'i']:
                 mode = 'interactive'
         except (KeyboardInterrupt, EOFError):
-            print("\n👋 退出")
+            # print("\n👋 退出")
             rclpy.shutdown()
             return
     
@@ -557,7 +557,7 @@ def main(args=None):
             tester.interactive_mode()
     
     except KeyboardInterrupt:
-        print("\n\n⚠️  收到中断信号")
+        # print("\n\n⚠️  收到中断信号")
     finally:
         tester.running = False
         tester.reset_controls()

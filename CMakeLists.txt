@@ -11,8 +11,13 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sa_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(cannode REQUIRED)
 find_package(Protobuf REQUIRED)
+
+# 查找 cannode 包（必须，因为需要 cannode 的消息类型）
+find_package(cannode REQUIRED)
+if(NOT cannode_FOUND)
+  message(FATAL_ERROR "cannode package not found. Please ensure cannode is built before teleoptocantransformer.")
+endif()
 find_package(rosidl_default_generators REQUIRED)
 
 # 查找 nlohmann_json（如果找不到，使用简单的字符串解析）

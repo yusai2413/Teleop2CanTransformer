@@ -20,7 +20,7 @@ try:
     from sa_msgs.msg import ProtoAdapter
     HAS_SA_MSGS = True
 except ImportError:
-    print("警告: 无法导入 sa_msgs，将无法解析 protobuf 消息")
+    # print("警告: 无法导入 sa_msgs，将无法解析 protobuf 消息")
     HAS_SA_MSGS = False
 
 # 尝试导入 protobuf
@@ -33,7 +33,7 @@ try:
     from control_msgs.control_cmd_pb2 import ControlCommand
     PROTOBUF_AVAILABLE = True
 except ImportError as e:
-    print(f"警告: 无法导入 protobuf 模块: {e}")
+    # print(f"警告: 无法导入 protobuf 模块: {e}")
     PROTOBUF_AVAILABLE = False
 
 

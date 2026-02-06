@@ -324,9 +324,9 @@ class KeyboardJointPublisher(Node):
             changed(self.prev_values['steer_position'], self.steer_position) or
             changed(self.prev_values['wheel_velocity'], self.wheel_velocity)
         ):
-            print("bucket_prismatic_length: ", self.bucket_prismatic_length, "arm_prismatic_length: ", self.arm_prismatic_length)
-            print("Chasis angle: ", self.steer_position, "(", self.steer_position*180/3.14159, ")", "Wheel velocity: ", self.wheel_velocity)
-            print("-----------------------------------------------------")
+            # print("bucket_prismatic_length: ", self.bucket_prismatic_length, "arm_prismatic_length: ", self.arm_prismatic_length)
+            # print("Chasis angle: ", self.steer_position, "(", self.steer_position*180/3.14159, ")", "Wheel velocity: ", self.wheel_velocity)
+            # print("-----------------------------------------------------")
             self.prev_values['bucket_prismatic_length'] = self.bucket_prismatic_length
             self.prev_values['arm_prismatic_length'] = self.arm_prismatic_length
             self.prev_values['steer_position'] = self.steer_position

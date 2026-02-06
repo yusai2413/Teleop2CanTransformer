@@ -116,10 +116,10 @@ public:
             chassis_qos
         );
         
-        RCLCPP_INFO(this->get_logger(), "QoS 配置: /controls/teleop (BEST_EFFORT), /vehicle_command (RELIABLE)");
-        RCLCPP_INFO(this->get_logger(), "订阅话题: /controls/teleop");
-        RCLCPP_INFO(this->get_logger(), "发布话题: /vehicle_command (序列化)");
-        RCLCPP_INFO(this->get_logger(), "发布话题: /vehicle_command_debug (非序列化，可用 ros2 topic echo 查看)");
+        // RCLCPP_INFO(this->get_logger(), "QoS 配置: /controls/teleop (BEST_EFFORT), /vehicle_command (RELIABLE)");
+        // RCLCPP_INFO(this->get_logger(), "订阅话题: /controls/teleop");
+        // RCLCPP_INFO(this->get_logger(), "发布话题: /vehicle_command (序列化)");
+        // RCLCPP_INFO(this->get_logger(), "发布话题: /vehicle_command_debug (非序列化，可用 ros2 topic echo 查看)");
         
         // 使用定时器定期检查连接状态
         auto connection_check_timer = this->create_wall_timer(
@@ -127,8 +127,8 @@ public:
             [this]() {
                 size_t pub_count = teleop_sub_->get_publisher_count();
                 size_t sub_count = vehicle_cmd_pub_->get_subscription_count();
-                RCLCPP_INFO(this->get_logger(), "连接状态检查: /controls/teleop 发布者数=%zu, /vehicle_command 订阅者数=%zu", 
-                           pub_count, sub_count);
+                // RCLCPP_INFO(this->get_logger(), "连接状态检查: /controls/teleop 发布者数=%zu, /vehicle_command 订阅者数=%zu", 
+                //            pub_count, sub_count);
             }
         );
         
@@ -140,17 +140,17 @@ public:
         last_arm_angle_ = 0.0;
         last_shovel_angle_ = 0.0;
         
-        RCLCPP_INFO(this->get_logger(), "Teleop2CanTransformerChangan 节点已启动（适配长安协议）");
-        RCLCPP_INFO(this->get_logger(), "死区设置: steering=%.3f, throttle=%.3f, brake=%.3f, boom=%.3f, bucket=%.3f",
-                    steering_deadzone_, throttle_deadzone_, brake_deadzone_, boom_deadzone_, bucket_deadzone_);
-        RCLCPP_INFO(this->get_logger(), "角度范围: 大臂=%.1f~%.1f度, 铲斗=%.1f~%.1f度, 转向=%.1f~%.1f度",
-                    arm_angle_min_, arm_angle_max_, shovel_angle_min_, shovel_angle_max_,
-                    steer_angle_min_, steer_angle_max_);
-        RCLCPP_INFO(this->get_logger(), "发布开关: publish_vehicle_command=%s, publish_vehicle_command_debug=%s, publish_chassis_feedback=%s",
-                    publish_vehicle_command_ ? "true" : "false",
-                    publish_vehicle_command_debug_ ? "true" : "false",
-                    publish_chassis_feedback_ ? "true" : "false");
-        RCLCPP_INFO(this->get_logger(), "详细日志: verbose_log=%s (默认关闭以降低CPU)", verbose_log_ ? "true" : "false");
+        // RCLCPP_INFO(this->get_logger(), "Teleop2CanTransformerChangan 节点已启动（适配长安协议）");
+        // RCLCPP_INFO(this->get_logger(), "死区设置: steering=%.3f, throttle=%.3f, brake=%.3f, boom=%.3f, bucket=%.3f",
+        //             steering_deadzone_, throttle_deadzone_, brake_deadzone_, boom_deadzone_, bucket_deadzone_);
+        // RCLCPP_INFO(this->get_logger(), "角度范围: 大臂=%.1f~%.1f度, 铲斗=%.1f~%.1f度, 转向=%.1f~%.1f度",
+        //             arm_angle_min_, arm_angle_max_, shovel_angle_min_, shovel_angle_max_,
+        //             steer_angle_min_, steer_angle_max_);
+        // RCLCPP_INFO(this->get_logger(), "发布开关: publish_vehicle_command=%s, publish_vehicle_command_debug=%s, publish_chassis_feedback=%s",
+        //             publish_vehicle_command_ ? "true" : "false",
+        //             publish_vehicle_command_debug_ ? "true" : "false",
+        //             publish_chassis_feedback_ ? "true" : "false");
+        // RCLCPP_INFO(this->get_logger(), "详细日志: verbose_log=%s (默认关闭以降低CPU)", verbose_log_ ? "true" : "false");
     }
 
 private:
@@ -286,14 +286,14 @@ private:
     void teleop_callback(const std_msgs::msg::String::SharedPtr msg)
     {
         if (verbose_log_) {
-            RCLCPP_INFO(this->get_logger(), "🔔 回调函数被调用！");
+            // RCLCPP_INFO(this->get_logger(), "🔔 回调函数被调用！");
         }
         try {
             // 打印接收到的原始输入
             if (verbose_log_) {
-                RCLCPP_INFO(this->get_logger(), "============================================================");
-                RCLCPP_INFO(this->get_logger(), "📥 收到控制指令: %s", msg->data.c_str());
-                RCLCPP_INFO(this->get_logger(), "📥 消息长度: %zu 字节", msg->data.length());
+                // RCLCPP_INFO(this->get_logger(), "============================================================");
+                // RCLCPP_INFO(this->get_logger(), "📥 收到控制指令: %s", msg->data.c_str());
+                // RCLCPP_INFO(this->get_logger(), "📥 消息长度: %zu 字节", msg->data.length());
             }
             
             // 解析 JSON
@@ -427,31 +427,31 @@ private:
             
             // 打印转换后的输出信息（仅在 verbose 模式下打印）
             if (verbose_log_) {
-                RCLCPP_INFO(this->get_logger(), "📤 转换后的控制命令 (changan 协议):");
+                // RCLCPP_INFO(this->get_logger(), "📤 转换后的控制命令 (changan 协议):");
                 
                 // 转向 (steering_target: 弧度，对应 -40~40度)
                 double steering_target = cmd.steering_target();
                 double steering_deg = steering_target * 180.0 / M_PI;
-                RCLCPP_INFO(this->get_logger(), "   转向 (steering_target): %.4f 弧度 (%.2f 度)", 
-                           steering_target, steering_deg);
+                // RCLCPP_INFO(this->get_logger(), "   转向 (steering_target): %.4f 弧度 (%.2f 度)", 
+                //            steering_target, steering_deg);
                 if (steering_deg < -40.0 || steering_deg > 40.0) {
-                    RCLCPP_WARN(this->get_logger(), "     ⚠ 警告: steering_target 超出范围 [-40, 40] 度");
+                    // RCLCPP_WARN(this->get_logger(), "     ⚠ 警告: steering_target 超出范围 [-40, 40] 度");
                 }
                 
                 // 油门 (throttle: [0, 16.67])
                 double throttle = cmd.throttle();
-                RCLCPP_INFO(this->get_logger(), "   油门 (throttle): %.2f (对应扭矩: %.2f Nm)", 
-                           throttle, throttle * 12.0);
+                // RCLCPP_INFO(this->get_logger(), "   油门 (throttle): %.2f (对应扭矩: %.2f Nm)", 
+                //            throttle, throttle * 12.0);
                 if (throttle < 0.0 || throttle > 16.67) {
-                    RCLCPP_WARN(this->get_logger(), "     ⚠ 警告: throttle 超出范围 [0, 16.67]");
+                    // RCLCPP_WARN(this->get_logger(), "     ⚠ 警告: throttle 超出范围 [0, 16.67]");
                 }
                 
                 // 刹车 (brake: [0, 50])
                 double brake = cmd.brake();
-                RCLCPP_INFO(this->get_logger(), "   刹车 (brake): %.2f (对应电流: %.2f mA)", 
-                           brake, brake * 8.0);
+                // RCLCPP_INFO(this->get_logger(), "   刹车 (brake): %.2f (对应电流: %.2f mA)", 
+                //            brake, brake * 8.0);
                 if (brake < 0.0 || brake > 50.0) {
-                    RCLCPP_WARN(this->get_logger(), "     ⚠ 警告: brake 超出范围 [0, 50]");
+                    // RCLCPP_WARN(this->get_logger(), "     ⚠ 警告: brake 超出范围 [0, 50]");
                 }
                 
                 // 档位
@@ -462,23 +462,23 @@ private:
                     case control::canbus::Chassis::GEAR_NEUTRAL: gear_str = "N(空档)"; break;
                     default: gear_str = "N(空档)"; break;
                 }
-                RCLCPP_INFO(this->get_logger(), "   档位 (gear_location): %s (%d)", 
-                           gear_str.c_str(), static_cast<int>(cmd.gear_location()));
+                // RCLCPP_INFO(this->get_logger(), "   档位 (gear_location): %s (%d)", 
+                //            gear_str.c_str(), static_cast<int>(cmd.gear_location()));
                 
                 if (cmd.has_speed()) {
-                    RCLCPP_INFO(this->get_logger(), "   目标速度 (speed): %.2f m/s", cmd.speed());
+                    // RCLCPP_INFO(this->get_logger(), "   目标速度 (speed): %.2f m/s", cmd.speed());
                 }
                 
                 // 大臂角度 (arm_angle: [0, 60]°)
                 if (cmd.has_arm_angle()) {
                     double arm_angle = cmd.arm_angle();
                     if (cmd.arm_enable()) {
-                        RCLCPP_INFO(this->get_logger(), "   大臂角度 (arm_angle): %.2f° [启用]", arm_angle);
+                        // RCLCPP_INFO(this->get_logger(), "   大臂角度 (arm_angle): %.2f° [启用]", arm_angle);
                     } else {
-                        RCLCPP_INFO(this->get_logger(), "   大臂角度 (arm_angle): %.2f° [禁用]", arm_angle);
+                        // RCLCPP_INFO(this->get_logger(), "   大臂角度 (arm_angle): %.2f° [禁用]", arm_angle);
                     }
                     if (arm_angle < 0.0 || arm_angle > 60.0) {
-                        RCLCPP_WARN(this->get_logger(), "     ⚠ 警告: arm_angle 超出范围 [0, 60]°");
+                        // RCLCPP_WARN(this->get_logger(), "     ⚠ 警告: arm_angle 超出范围 [0, 60]°");
                     }
                 }
                 
@@ -486,21 +486,21 @@ private:
                 if (cmd.has_shovel_angle()) {
                     double shovel_angle = cmd.shovel_angle();
                     if (cmd.shovel_enable()) {
-                        RCLCPP_INFO(this->get_logger(), "   铲斗角度 (shovel_angle): %.2f° [启用]", shovel_angle);
+                        // RCLCPP_INFO(this->get_logger(), "   铲斗角度 (shovel_angle): %.2f° [启用]", shovel_angle);
                     } else {
-                        RCLCPP_INFO(this->get_logger(), "   铲斗角度 (shovel_angle): %.2f° [禁用]", shovel_angle);
+                        // RCLCPP_INFO(this->get_logger(), "   铲斗角度 (shovel_angle): %.2f° [禁用]", shovel_angle);
                     }
                     if (shovel_angle < -90.0 || shovel_angle > 40.0) {
-                        RCLCPP_WARN(this->get_logger(), "     ⚠ 警告: shovel_angle 超出范围 [-90, 40]°");
+                        // RCLCPP_WARN(this->get_logger(), "     ⚠ 警告: shovel_angle 超出范围 [-90, 40]°");
                     }
                 }
                 
                 if (cmd.has_estop()) {
-                    RCLCPP_INFO(this->get_logger(), "   紧急停止 (estop): %s", cmd.estop() ? "是" : "否");
+                    // RCLCPP_INFO(this->get_logger(), "   紧急停止 (estop): %s", cmd.estop() ? "是" : "否");
                 }
                 
                 if (cmd.has_parking_brake()) {
-                    RCLCPP_INFO(this->get_logger(), "   驻车制动 (parking_brake): %s", cmd.parking_brake() ? "是" : "否");
+                    // RCLCPP_INFO(this->get_logger(), "   驻车制动 (parking_brake): %s", cmd.parking_brake() ? "是" : "否");
                 }
             }
             
@@ -536,13 +536,13 @@ private:
             }
             
             if (verbose_log_) {
-                RCLCPP_INFO(this->get_logger(), "✅ 已发布到 /vehicle_command (protobuf 大小: %zu 字节)", serialized_data.size());
-                RCLCPP_INFO(this->get_logger(), "✅ 已发布到 /vehicle_command_debug (非序列化消息)");
-                RCLCPP_INFO(this->get_logger(), "============================================================");
+                // RCLCPP_INFO(this->get_logger(), "✅ 已发布到 /vehicle_command (protobuf 大小: %zu 字节)", serialized_data.size());
+                // RCLCPP_INFO(this->get_logger(), "✅ 已发布到 /vehicle_command_debug (非序列化消息)");
+                // RCLCPP_INFO(this->get_logger(), "============================================================");
             }
             
         } catch (const std::exception& e) {
-            RCLCPP_ERROR(this->get_logger(), "处理控制命令时出错: %s", e.what());
+            // RCLCPP_ERROR(this->get_logger(), "处理控制命令时出错: %s", e.what());
         }
     }
     

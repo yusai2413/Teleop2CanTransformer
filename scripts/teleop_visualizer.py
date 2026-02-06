@@ -44,12 +44,12 @@ try:
     from std_msgs.msg import String as StringMsg
     from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 except ImportError as e:
-    print("错误: 无法导入 ROS2 模块。")
-    print("请运行以下命令设置环境:")
-    print("  source /opt/ros/humble/setup.bash  # 根据你的 ROS2 版本调整")
-    print("  source ~/cannode_ws/install/setup.bash")
-    print("或者使用启动脚本: ./run_visualizer.sh")
-    print(f"详细错误: {e}")
+    # print("错误: 无法导入 ROS2 模块。")
+    # print("请运行以下命令设置环境:")
+    # print("  source /opt/ros/humble/setup.bash  # 根据你的 ROS2 版本调整")
+    # print("  source ~/cannode_ws/install/setup.bash")
+    # print("或者使用启动脚本: ./run_visualizer.sh")
+    # print(f"详细错误: {e}")
     sys.exit(1)
 
 # 尝试导入自定义消息（可选，如果失败则输出信息功能将被禁用）
@@ -57,13 +57,13 @@ VehicleCommand = None
 try:
     from teleoptocantransformer.msg import VehicleCommand
 except (ImportError, Exception) as e:
-    print("警告: 无法导入 teleoptocantransformer 消息包。")
-    print("输出信息显示功能将被禁用，但输入信息显示和动画仍可正常工作。")
-    print("如果需要输出信息，请确保:")
-    print("  1. 已编译工作空间: colcon build")
-    print("  2. 已 source 工作空间: source ~/cannode_ws/install/setup.bash")
-    print("或者使用启动脚本: ./run_visualizer.sh")
-    print(f"详细错误: {e}")
+    # print("警告: 无法导入 teleoptocantransformer 消息包。")
+    # print("输出信息显示功能将被禁用，但输入信息显示和动画仍可正常工作。")
+    # print("如果需要输出信息，请确保:")
+    # print("  1. 已编译工作空间: colcon build")
+    # print("  2. 已 source 工作空间: source ~/cannode_ws/install/setup.bash")
+    # print("或者使用启动脚本: ./run_visualizer.sh")
+    # print(f"详细错误: {e}")
     VehicleCommand = None  # 设置为 None，表示不可用
 
 import json
@@ -167,16 +167,16 @@ class TeleopVisualizer(Node):
             
             # 打印输入信息到终端
             timestamp = datetime.now().strftime('%H:%M:%S.%f')[:-3]
-            print(f'\n[{timestamp}] 📥 输入信息:')
-            print('=' * 60)
+            # print(f'\n[{timestamp}] 📥 输入信息:')
+            # print('=' * 60)
             for key, value in sorted(data.items()):
                 if isinstance(value, float):
-                    print(f'  {key:20s}: {value:8.3f}')
+                    # print(f'  {key:20s}: {value:8.3f}')
                 elif isinstance(value, bool):
-                    print(f'  {key:20s}: {value}')
+                    # print(f'  {key:20s}: {value}')
                 else:
-                    print(f'  {key:20s}: {value}')
-            print('=' * 60)
+                    # print(f'  {key:20s}: {value}')
+            # print('=' * 60)
             
             with self.data_lock:
                 # 更新数据（支持两种命名方式：驼峰和下划线）
@@ -220,19 +220,19 @@ class TeleopVisualizer(Node):
             # 打印输出信息到终端
             timestamp = datetime.now().strftime('%H:%M:%S.%f')[:-3]
             gear_map = {0: 'N(空档)', 1: 'D(前进)', 2: 'R(后退)'}
-            print(f'\n[{timestamp}] 📤 输出信息:')
-            print('=' * 60)
-            print(f'  {"转向目标":20s}: {msg.steering_target:8.2f} (范围: -800~800)')
-            print(f'  {"油门":20s}: {msg.throttle:8.2f} (范围: 0~200)')
-            print(f'  {"刹车":20s}: {msg.brake:8.2f} (范围: 350~3900)')
-            print(f'  {"档位":20s}: {gear_map.get(msg.gear_location, "未知")} ({msg.gear_location})')
-            print(f'  {"目标速度":20s}: {msg.speed:8.2f} m/s')
-            print(f'  {"大臂角度":20s}: {msg.arm_angle:8.2f}° (范围: -800~800) {"[启用]" if msg.arm_enable else "[禁用]"}')
-            print(f'  {"铲斗角度":20s}: {msg.shovel_angle:8.2f}° (范围: -800~800) {"[启用]" if msg.shovel_enable else "[禁用]"}')
-            print(f'  {"紧急停止":20s}: {"是" if msg.estop else "否"}')
-            print(f'  {"驻车制动":20s}: {"是" if msg.parking_brake else "否"}')
-            print(f'  {"发动机":20s}: {"开启" if msg.engine_on_off else "关闭"}')
-            print('=' * 60)
+            # print(f'\n[{timestamp}] 📤 输出信息:')
+            # print('=' * 60)
+            # print(f'  {"转向目标":20s}: {msg.steering_target:8.2f} (范围: -800~800)')
+            # print(f'  {"油门":20s}: {msg.throttle:8.2f} (范围: 0~200)')
+            # print(f'  {"刹车":20s}: {msg.brake:8.2f} (范围: 350~3900)')
+            # print(f'  {"档位":20s}: {gear_map.get(msg.gear_location, "未知")} ({msg.gear_location})')
+            # print(f'  {"目标速度":20s}: {msg.speed:8.2f} m/s')
+            # print(f'  {"大臂角度":20s}: {msg.arm_angle:8.2f}° (范围: -800~800) {"[启用]" if msg.arm_enable else "[禁用]"}')
+            # print(f'  {"铲斗角度":20s}: {msg.shovel_angle:8.2f}° (范围: -800~800) {"[启用]" if msg.shovel_enable else "[禁用]"}')
+            # print(f'  {"紧急停止":20s}: {"是" if msg.estop else "否"}')
+            # print(f'  {"驻车制动":20s}: {"是" if msg.parking_brake else "否"}')
+            # print(f'  {"发动机":20s}: {"开启" if msg.engine_on_off else "关闭"}')
+            # print('=' * 60)
             
         except Exception as e:
             self.get_logger().error(f'处理输出消息时出错: {e}')
