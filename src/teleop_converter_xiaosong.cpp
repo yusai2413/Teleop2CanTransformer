@@ -567,6 +567,12 @@ private:
                 }
             }
             
+            // 处理远程申请进入遥控
+            if (data.find("request_remote_control") != data.end()) {
+                bool request_remote = SimpleJsonParser::get_bool(data["request_remote_control"]);
+                cmd.set_request_remote_control(request_remote);
+            }
+            
             // 处理紧急停止
             if (data.find("emergency_stop") != data.end()) {
                 bool estop = SimpleJsonParser::get_bool(data["emergency_stop"]);
