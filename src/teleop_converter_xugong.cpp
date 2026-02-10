@@ -1,6 +1,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
-#include <sa_msgs/msg/proto_adapter.hpp>
+#include <cyber_msgs/msg/proto_adapter.hpp>
 #include "teleoptocantransformer/msg/vehicle_command.hpp"
 #include <rclcpp/qos.hpp>
 #include <chrono>
@@ -15,7 +15,7 @@
 #include "control_msgs/control_cmd.pb.h"
 #include "common_msgs/chassis_msgs/chassis.pb.h"
 #include "common_msgs/basic_msgs/header.pb.h"
-#include <sa_msgs/msg/chassis_status.hpp>
+#include <cyber_msgs/msg/chassis_status.hpp>
 
 using namespace std::chrono_literals;
 
@@ -83,7 +83,7 @@ public:
         vehicle_cmd_qos.durability(rclcpp::DurabilityPolicy::Volatile);
         vehicle_cmd_qos.history(rclcpp::HistoryPolicy::KeepLast);
         
-        vehicle_cmd_pub_ = this->create_publisher<sa_msgs::msg::ProtoAdapter>(
+        vehicle_cmd_pub_ = this->create_publisher<cyber_msgs::msg::ProtoAdapter>(
             "/vehicle_command",
             vehicle_cmd_qos
         );
@@ -100,7 +100,7 @@ public:
         chassis_qos.durability(rclcpp::DurabilityPolicy::Volatile);
         chassis_qos.history(rclcpp::HistoryPolicy::KeepLast);
 
-        chassis_status_sub_ = this->create_subscription<sa_msgs::msg::ChassisStatus>(
+        chassis_status_sub_ = this->create_subscription<cyber_msgs::msg::ChassisStatus>(
             "/chassis_status",
             chassis_qos,
             std::bind(&Teleop2CanTransformer::chassis_status_callback, this, std::placeholders::_1)
@@ -167,7 +167,7 @@ private:
     }
 
     // 将 ChassisStatus 转成 JSON 字符串
-    std::string chassis_status_to_json(const sa_msgs::msg::ChassisStatus & msg)
+    std::string chassis_status_to_json(const cyber_msgs::msg::ChassisStatus & msg)
     {
         auto bool_to_str = [](bool v) { return v ? "true" : "false"; };
         std::ostringstream oss;
@@ -264,7 +264,7 @@ private:
     }
 
     // 底盘状态订阅回调
-    void chassis_status_callback(const sa_msgs::msg::ChassisStatus::SharedPtr msg)
+    void chassis_status_callback(const cyber_msgs::msg::ChassisStatus::SharedPtr msg)
     {
         if (publish_chassis_feedback_) {
             std_msgs::msg::String json_msg;
@@ -601,7 +601,7 @@ private:
             
             // 创建 ROS2 消息（序列化版本），可配置是否发布，关闭时直接跳过构造与发布
             if (publish_vehicle_command_) {  // 根据参数决定是否发布
-                auto ros_msg = sa_msgs::msg::ProtoAdapter();
+                auto ros_msg = cyber_msgs::msg::ProtoAdapter();
                 ros_msg.pb.assign(serialized_data.begin(), serialized_data.end());
                 vehicle_cmd_pub_->publish(ros_msg);
             }
@@ -637,9 +637,9 @@ private:
     
     // 订阅者和发布者
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr teleop_sub_;
-    rclcpp::Publisher<sa_msgs::msg::ProtoAdapter>::SharedPtr vehicle_cmd_pub_;
+    rclcpp::Publisher<cyber_msgs::msg::ProtoAdapter>::SharedPtr vehicle_cmd_pub_;
     rclcpp::Publisher<teleoptocantransformer::msg::VehicleCommand>::SharedPtr vehicle_cmd_debug_pub_;
-    rclcpp::Subscription<sa_msgs::msg::ChassisStatus>::SharedPtr chassis_status_sub_;
+    rclcpp::Subscription<cyber_msgs::msg::ChassisStatus>::SharedPtr chassis_status_sub_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr chassis_feedback_pub_;
     
     // 死区参数

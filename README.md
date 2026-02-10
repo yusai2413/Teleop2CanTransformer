@@ -65,7 +65,7 @@
 
 ## 输出格式
 
-发布到 `/vehicle_command` 话题（`sa_msgs::msg::ProtoAdapter`），包含序列化的 `control::ControlCommand` protobuf 消息。
+发布到 `/vehicle_command` 话题（`cyber_msgs::msg::ProtoAdapter`），包含序列化的 `control::ControlCommand` protobuf 消息。
 
 ### 映射关系
 

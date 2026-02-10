@@ -17,10 +17,10 @@ from std_msgs.msg import String as StringMsg
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 
 try:
-    from sa_msgs.msg import ProtoAdapter
+    from cyber_msgs.msg import ProtoAdapter
     HAS_SA_MSGS = True
 except ImportError:
-    # print("警告: 无法导入 sa_msgs，将无法解析 protobuf 消息")
+    # print("警告: 无法导入 cyber_msgs，将无法解析 protobuf 消息")
     HAS_SA_MSGS = False
 
 # 尝试导入 protobuf

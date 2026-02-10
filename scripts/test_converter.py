@@ -17,7 +17,7 @@ from std_msgs.msg import String as StringMsg
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
 
 try:
-    from sa_msgs.msg import ProtoAdapter
+    from cyber_msgs.msg import ProtoAdapter
     HAS_SA_MSGS = True
 except ImportError:
     ProtoAdapter = StringMsg
@@ -105,7 +105,7 @@ class TeleopConverterTester(Node):
             self.get_logger().info('订阅者已创建，等待发布者连接...')
         else:
             self.can_parse_protobuf = False
-            self.get_logger().warn('sa_msgs 不可用，使用 String 消息类型作为后备')
+            self.get_logger().warn('cyber_msgs 不可用，使用 String 消息类型作为后备')
         
         # 测试结果统计
         self.test_results = {

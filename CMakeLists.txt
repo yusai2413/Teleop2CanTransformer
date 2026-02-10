@@ -9,7 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(sa_msgs REQUIRED)
+find_package(cyber_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(Protobuf REQUIRED)
 
@@ -60,7 +60,7 @@ target_link_libraries(teleop2can_transformer_xugong
 ament_target_dependencies(teleop2can_transformer_xugong
   rclcpp
   std_msgs
-  sa_msgs
+  cyber_msgs
 )
 
 # 链接消息库
@@ -82,7 +82,7 @@ target_link_libraries(teleop2can_transformer_changan
 ament_target_dependencies(teleop2can_transformer_changan
   rclcpp
   std_msgs
-  sa_msgs
+  cyber_msgs
 )
 
 # 链接消息库
@@ -104,7 +104,7 @@ target_link_libraries(teleop2can_transformer_xiaosong
 ament_target_dependencies(teleop2can_transformer_xiaosong
   rclcpp
   std_msgs
-  sa_msgs
+  cyber_msgs
   geometry_msgs
   cannode
 )
